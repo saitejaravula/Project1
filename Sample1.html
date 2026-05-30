@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Record Management</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
+
+  :root {
+    --bg: #f5f4f0;
+    --surface: #ffffff;
+    --border: #d0cec8;
+    --primary: #1a1a2e;
+    --accent: #e63946;
+    --accent2: #457b9d;
+    --text: #1a1a2e;
+    --muted: #6b6b7b;
+    --success: #2d6a4f;
+    --warn: #d4a017;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  /* ── AUTH PAGES ── */
+  #loginPage, #signupPage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: var(--primary);
+  }
+  #signupPage { display: none; }
+
+  .login-box {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    width: 380px;
+    padding: 40px 36px 36px;
+  }
+
+  .login-box .brand {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+
+  .login-box h1 {
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 28px;
+    line-height: 1.2;
+  }
+
+  .field { margin-bottom: 16px; }
+  .field label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .field input, .field select, .field textarea {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    font-family: var(--sans);
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    transition: border-color .2s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--accent2);
+  }
+  .field .err {
+    font-size: 11px;
+    color: var(--accent);
+    margin-top: 4px;
+    font-family: var(--mono);
+    display: none;
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 9px 20px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border: 1.5px solid transparent;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .btn-primary {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+  }
+  .btn-primary:hover { background: var(--accent); border-color: var(--accent); }
+  .btn-danger {
+    background: transparent;
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .btn-danger:hover { background: var(--accent); color: #fff; }
+  .btn-secondary {
+    background: transparent;
+    color: var(--accent2);
+    border-color: var(--accent2);
+  }
+  .btn-secondary:hover { background: var(--accent2); color: #fff; }
+  .btn-outline {
+    background: transparent;
+    color: var(--primary);
+    border-color: var(--border);
+    width: 100%;
+    text-align: center;
+    margin-top: 10px;
+  }
+  .btn-outline:hover { border-color: var(--accent2); color: var(--accent2); }
+  .btn-full { width: 100%; text-align: center; }
+
+  .auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 18px 0 10px;
+    color: var(--border);
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+  .auth-divider::before, .auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .login-hint {
+    margin-top: 16px;
+    font-size: 11px;
+    color: var(--muted);
+    font-family: var(--mono);
+    border-top: 1px solid var(--border);
+    padding-top: 14px;
+  }
+
+  .switch-link {
+    margin-top: 14px;
+    font-size: 12px;
+    color: var(--muted);
+    font-family: var(--mono);
+    text-align: center;
+  }
+  .switch-link a {
+    color: var(--accent2);
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  /* password strength */
+  .strength-bar {
+    height: 3px;
+    background: var(--border);
+    margin-top: 6px;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .strength-fill {
+    height: 100%;
+    width: 0%;
+    transition: width .3s, background .3s;
+    border-radius: 2px;
+  }
+  .strength-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+
+  /* ── APP SHELL ── */
+  #appPage { display: none; min-height: 100vh; }
+
+  header {
+    background: var(--primary);
+    color: #fff;
+    padding: 0 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 52px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  header .logo { font-family: var(--mono); font-size: 13px; letter-spacing: 2px; text-transform: uppercase; }
+  header .logo span { color: var(--accent); }
+  header .user-info { font-family: var(--mono); font-size: 11px; color: #aaa; display: flex; align-items: center; gap: 16px; }
+
+  nav {
+    background: var(--surface);
+    border-bottom: 1.5px solid var(--border);
+    padding: 0 28px;
+    display: flex;
+  }
+  nav button {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 14px 18px;
+    background: none;
+    border: none;
+    border-bottom: 2.5px solid transparent;
+    cursor: pointer;
+    color: var(--muted);
+    transition: all .15s;
+  }
+  nav button:hover { color: var(--text); }
+  nav button.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+
+  main { padding: 28px; max-width: 1100px; margin: 0 auto; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .section-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; }
+  .form-grid .span2 { grid-column: 1 / -1; }
+  .form-card { background: var(--surface); border: 1.5px solid var(--border); padding: 28px; margin-bottom: 24px; }
+  .form-actions { display: flex; gap: 12px; margin-top: 8px; }
+
+  .alert { padding: 10px 16px; font-family: var(--mono); font-size: 12px; margin-bottom: 16px; display: none; }
+  .alert.success { background: #d8f3dc; color: var(--success); border-left: 3px solid var(--success); }
+  .alert.error   { background: #fce4e4; color: var(--accent);  border-left: 3px solid var(--accent); }
+
+  .search-row { display: flex; gap: 10px; margin-bottom: 20px; align-items: flex-end; }
+  .search-row .field { margin: 0; flex: 1; }
+  .search-row .field input { background: var(--surface); }
+
+  .table-wrap { background: var(--surface); border: 1.5px solid var(--border); overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead tr { background: var(--primary); color: #fff; }
+  thead th { font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; padding: 12px 14px; text-align: left; font-weight: 600; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+  tbody tr:hover { background: #f0eeea; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody td { padding: 11px 14px; vertical-align: middle; }
+
+  .badge { display: inline-block; font-family: var(--mono); font-size: 10px; padding: 2px 8px; letter-spacing: .5px; text-transform: uppercase; }
+  .badge-active   { background: #d8f3dc; color: var(--success); }
+  .badge-inactive { background: #fce4e4; color: var(--accent); }
+
+  .action-btns { display: flex; gap: 6px; }
+
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+  .stat-card { background: var(--surface); border: 1.5px solid var(--border); padding: 20px 22px; }
+  .stat-card .num { font-family: var(--mono); font-size: 28px; font-weight: 600; color: var(--primary); line-height: 1; margin-bottom: 4px; }
+  .stat-card .label { font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+
+  .no-results { text-align: center; padding: 40px; color: var(--muted); font-family: var(--mono); font-size: 12px; }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border: 2px solid var(--border); padding: 32px; width: 480px; max-width: 95vw; }
+  .modal h3 { font-family: var(--mono); font-size: 13px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 20px; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 24px; justify-content: flex-end; }
+
+  /* ── MANAGE USERS SECTION ── */
+  .users-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .user-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    padding: 18px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .user-card .uname { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--primary); }
+  .user-card .urole { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-top: 3px; letter-spacing: 1px; text-transform: uppercase; }
+
+  @media (max-width: 600px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .stats-row { grid-template-columns: 1fr; }
+    main { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ LOGIN PAGE ═══════════════════ -->
+<div id="loginPage">
+  <div class="login-box">
+    <div class="brand">EduTrack</div>
+    <h1>Welcome Back</h1>
+
+    <div class="alert error" id="loginErr"></div>
+
+    <div class="field">
+      <label>Username</label>
+      <input type="text" id="loginUser" placeholder="Enter username" autocomplete="username">
+      <div class="err" id="errUser">Username is required.</div>
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
+      <div class="err" id="errPass">Password is required.</div>
+    </div>
+
+    <button class="btn btn-primary btn-full" onclick="doLogin()">Login →</button>
+
+    <div class="auth-divider">or</div>
+
+    <button class="btn btn-outline" onclick="showSignup()">Create New Account</button>
+
+    <div class="login-hint">Default admin: admin / admin123</div>
+  </div>
+</div>
+
+<!-- ═══════════════════ SIGNUP PAGE ═══════════════════ -->
+<div id="signupPage">
+  <div class="login-box">
+    <div class="brand">EduTrack</div>
+    <h1>Create Account</h1>
+
+    <div class="alert error"   id="signupErr"></div>
+    <div class="alert success" id="signupOk"></div>
+
+    <div class="field">
+      <label>Full Name *</label>
+      <input type="text" id="suFullName" placeholder="e.g. Riya Sharma">
+      <div class="err" id="suErrName">Full name is required.</div>
+    </div>
+
+    <div class="field">
+      <label>Username *</label>
+      <input type="text" id="suUser" placeholder="Choose a username">
+      <div class="err" id="suErrUser">Username is required.</div>
+    </div>
+
+    <div class="field">
+      <label>Role</label>
+      <select id="suRole">
+        <option value="Administrator">Administrator</option>
+        <option value="Staff">Staff</option>
+        <option value="Viewer">Viewer</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Password *</label>
+      <input type="password" id="suPass" placeholder="Min 6 characters" oninput="checkStrength(this.value)">
+      <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+      <div class="strength-label" id="strengthLabel"></div>
+      <div class="err" id="suErrPass">Password must be at least 6 characters.</div>
+    </div>
+
+    <div class="field">
+      <label>Confirm Password *</label>
+      <input type="password" id="suPassConfirm" placeholder="Re-enter password">
+      <div class="err" id="suErrConfirm">Passwords do not match.</div>
+    </div>
+
+    <button class="btn btn-primary btn-full" onclick="doSignup()">Sign Up →</button>
+
+    <div class="switch-link">Already have an account? <a onclick="showLogin()">Login here</a></div>
+  </div>
+</div>
+
+<!-- ═══════════════════ APP PAGE ═══════════════════ -->
+<div id="appPage">
+  <header>
+    <div class="logo">Edu<span>Track</span> &nbsp;/&nbsp; Records</div>
+    <div class="user-info">
+      <span id="loggedUser"></span>
+      <button class="btn btn-danger" style="padding:5px 12px;font-size:10px" onclick="doLogout()">Logout</button>
+    </div>
+  </header>
+
+  <nav>
+    <button class="active" onclick="switchTab('dashboard',this)">Dashboard</button>
+    <button onclick="switchTab('addStudent',this)">Add Student</button>
+    <button onclick="switchTab('viewStudents',this)">View Students</button>
+    <button onclick="switchTab('search',this)">Search</button>
+    <button id="manageUsersBtn" onclick="switchTab('manageUsers',this)" style="display:none">Manage Users</button>
+  </nav>
+
+  <main>
+
+    <!-- DASHBOARD -->
+    <div id="dashboard" class="section active">
+      <div class="section-title">Dashboard Overview</div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="num" id="statTotal">0</div><div class="label">Total Students</div></div>
+        <div class="stat-card"><div class="num" id="statActive">0</div><div class="label">Active</div></div>
+        <div class="stat-card"><div class="num" id="statDepts">0</div><div class="label">Departments</div></div>
+      </div>
+      <div class="section-title">Recent Students</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Name</th><th>Department</th><th>Email</th><th>Status</th></tr></thead>
+          <tbody id="recentBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ADD STUDENT -->
+    <div id="addStudent" class="section">
+      <div class="section-title">Add New Student</div>
+      <div class="alert success" id="addSuccess"></div>
+      <div class="form-card">
+        <div class="form-grid">
+          <div class="field"><label>Student ID *</label><input type="text" id="sId" placeholder="e.g. STU-001"><div class="err" id="eId">Student ID is required.</div></div>
+          <div class="field"><label>Full Name *</label><input type="text" id="sName" placeholder="e.g. Riya Sharma"><div class="err" id="eName">Full name is required.</div></div>
+          <div class="field"><label>Email *</label><input type="email" id="sEmail" placeholder="student@example.com"><div class="err" id="eEmail">Valid email is required.</div></div>
+          <div class="field"><label>Phone</label><input type="text" id="sPhone" placeholder="10-digit number"><div class="err" id="ePhone">Enter a valid 10-digit phone.</div></div>
+          <div class="field">
+            <label>Department *</label>
+            <select id="sDept">
+              <option value="">-- Select --</option>
+              <option>Computer Science</option><option>Electronics</option>
+              <option>Mechanical</option><option>Civil</option>
+              <option>Business Administration</option><option>Mathematics</option>
+            </select>
+            <div class="err" id="eDept">Department is required.</div>
+          </div>
+          <div class="field"><label>Year</label><select id="sYear"><option value="">-- Select --</option><option>1st Year</option><option>2nd Year</option><option>3rd Year</option><option>4th Year</option></select></div>
+          <div class="field"><label>Date of Birth</label><input type="date" id="sDob"></div>
+          <div class="field"><label>Status</label><select id="sStatus"><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
+          <div class="field span2"><label>Address</label><textarea id="sAddress" rows="2" placeholder="Street, City, State"></textarea></div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" onclick="addStudent()">Add Student</button>
+          <button class="btn btn-secondary" onclick="clearAddForm()">Clear</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW STUDENTS -->
+    <div id="viewStudents" class="section">
+      <div class="section-title">All Students</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Department</th><th>Year</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="studentsBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SEARCH -->
+    <div id="search" class="section">
+      <div class="section-title">Search Students</div>
+      <div class="search-row">
+        <div class="field"><label>Search by ID or Name</label><input type="text" id="searchInput" placeholder="Type student ID or name..."></div>
+        <button class="btn btn-primary" onclick="doSearch()">Search</button>
+        <button class="btn btn-secondary" onclick="clearSearch()">Clear</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Department</th><th>Year</th><th>Status</th></tr></thead>
+          <tbody id="searchBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- MANAGE USERS (Admin only) -->
+    <div id="manageUsers" class="section">
+      <div class="section-title">Registered Users</div>
+      <div class="users-grid" id="usersGrid"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <h3>Edit Student Record</h3>
+    <div class="form-grid">
+      <div class="field"><label>Student ID</label><input type="text" id="eModalId" disabled></div>
+      <div class="field"><label>Full Name *</label><input type="text" id="eModalName"><div class="err" id="eeModalName">Name required.</div></div>
+      <div class="field"><label>Email *</label><input type="email" id="eModalEmail"><div class="err" id="eeModalEmail">Valid email required.</div></div>
+      <div class="field"><label>Phone</label><input type="text" id="eModalPhone"></div>
+      <div class="field"><label>Department</label><select id="eModalDept"><option>Computer Science</option><option>Electronics</option><option>Mechanical</option><option>Civil</option><option>Business Administration</option><option>Mathematics</option></select></div>
+      <div class="field"><label>Year</label><select id="eModalYear"><option>1st Year</option><option>2nd Year</option><option>3rd Year</option><option>4th Year</option></select></div>
+      <div class="field"><label>Status</label><select id="eModalStatus"><option>Active</option><option>Inactive</option></select></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div class="modal-overlay" id="delModal">
+  <div class="modal">
+    <h3>Confirm Delete</h3>
+    <p style="font-size:14px;color:var(--muted);">Are you sure you want to delete this student record? This action cannot be undone.</p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeDelModal()">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════════
+   STORAGE KEYS
+   ════════════════════════════════════════ */
+const DB_KEY    = 'srm_students';
+const USERS_KEY = 'srm_users';
+
+/* ════════════════════════════════════════
+   USER DB  (localStorage-backed)
+   ════════════════════════════════════════ */
+const UserDB = {
+  getAll() {
+    return JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
+  },
+  find(username) {
+    return this.getAll().find(u => u.username.toLowerCase() === username.toLowerCase());
+  },
+  exists(username) {
+    return !!this.find(username);
+  },
+  register(fullName, username, password, role) {
+    const users = this.getAll();
+    if (this.exists(username)) return { ok: false, msg: 'Username already taken. Choose another.' };
+    users.push({ fullName, username, password, role, createdAt: new Date().toISOString() });
+    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+    return { ok: true };
+  },
+  delete(username) {
+    const users = this.getAll().filter(u => u.username !== username);
+    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  }
+};
+
+// Seed default admin if no users exist yet
+if (!UserDB.exists('admin')) {
+  UserDB.register('Administrator', 'admin', 'admin123', 'Administrator');
+}
+
+/* ════════════════════════════════════════
+   STUDENT DB
+   ════════════════════════════════════════ */
+const DB = {
+  selectAll() { return JSON.parse(localStorage.getItem(DB_KEY) || '[]'); },
+  search(query) {
+    const q = query.toLowerCase().trim();
+    return this.selectAll().filter(s => s.id.toLowerCase().includes(q) || s.name.toLowerCase().includes(q));
+  },
+  insert(student) {
+    const rows = this.selectAll();
+    if (rows.find(r => r.id === student.id)) return { ok: false, msg: 'Student ID already exists.' };
+    rows.push({ ...student, createdAt: new Date().toISOString() });
+    localStorage.setItem(DB_KEY, JSON.stringify(rows));
+    return { ok: true };
+  },
+  update(id, data) {
+    const rows = this.selectAll();
+    const idx = rows.findIndex(r => r.id === id);
+    if (idx === -1) return { ok: false, msg: 'Record not found.' };
+    rows[idx] = { ...rows[idx], ...data };
+    localStorage.setItem(DB_KEY, JSON.stringify(rows));
+    return { ok: true };
+  },
+  delete(id) {
+    localStorage.setItem(DB_KEY, JSON.stringify(this.selectAll().filter(r => r.id !== id)));
+    return { ok: true };
+  }
+};
+
+if (!localStorage.getItem(DB_KEY)) {
+  localStorage.setItem(DB_KEY, JSON.stringify([
+    { id:'STU-001', name:'Aarav Mehta',  email:'aarav@college.edu',  phone:'9876543210', dept:'Computer Science',       year:'2nd Year', status:'Active',   address:'Andheri, Mumbai', dob:'2003-05-12', createdAt:'2024-01-10T10:00:00Z' },
+    { id:'STU-002', name:'Riya Sharma',  email:'riya@college.edu',   phone:'9812345678', dept:'Electronics',            year:'3rd Year', status:'Active',   address:'Pune, MH',        dob:'2002-09-22', createdAt:'2024-01-11T10:00:00Z' },
+    { id:'STU-003', name:'Dev Patel',    email:'dev@college.edu',    phone:'9988776655', dept:'Mechanical',             year:'1st Year', status:'Active',   address:'Surat, GJ',       dob:'2004-03-18', createdAt:'2024-01-12T10:00:00Z' },
+    { id:'STU-004', name:'Priya Nair',   email:'priya@college.edu',  phone:'9765432109', dept:'Business Administration', year:'4th Year', status:'Inactive', address:'Kochi, KL',       dob:'2001-11-05', createdAt:'2024-01-13T10:00:00Z' },
+    { id:'STU-005', name:'Kabir Singh',  email:'kabir@college.edu',  phone:'9654321098', dept:'Civil',                  year:'2nd Year', status:'Active',   address:'Delhi, DL',       dob:'2003-07-30', createdAt:'2024-01-14T10:00:00Z' },
+  ]));
+}
+
+/* ════════════════════════════════════════
+   AUTH PAGES — show/hide
+   ════════════════════════════════════════ */
+function showSignup() {
+  document.getElementById('loginPage').style.display  = 'none';
+  document.getElementById('signupPage').style.display = 'flex';
+  clearSignupForm();
+}
+function showLogin() {
+  document.getElementById('signupPage').style.display = 'none';
+  document.getElementById('loginPage').style.display  = 'flex';
+}
+
+/* ════════════════════════════════════════
+   SIGNUP
+   ════════════════════════════════════════ */
+function doSignup() {
+  const fullName = document.getElementById('suFullName').value.trim();
+  const username = document.getElementById('suUser').value.trim();
+  const role     = document.getElementById('suRole').value;
+  const pass     = document.getElementById('suPass').value;
+  const confirm  = document.getElementById('suPassConfirm').value;
+
+  let ok = true;
+  ok = validate('suErrName',    fullName,         'Full name is required.')            && ok;
+  ok = validate('suErrUser',    username,          'Username is required.')            && ok;
+  ok = validateMinLen('suErrPass',    pass,    6,  'Password must be at least 6 characters.') && ok;
+  ok = validateMatch('suErrConfirm',  pass, confirm, 'Passwords do not match.')        && ok;
+  if (!ok) return;
+
+  const result = UserDB.register(fullName, username, pass, role);
+  if (!result.ok) {
+    showAlert('signupErr', result.msg, 'error'); return;
+  }
+
+  showAlert('signupOk', `Account created! You can now log in as "${username}".`, 'success');
+  setTimeout(() => {
+    clearSignupForm();
+    showLogin();
+  }, 1800);
+}
+
+function clearSignupForm() {
+  ['suFullName','suUser','suPass','suPassConfirm'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('suRole').selectedIndex = 0;
+  ['suErrName','suErrUser','suErrPass','suErrConfirm','signupErr','signupOk'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+  document.getElementById('strengthFill').style.width = '0%';
+  document.getElementById('strengthLabel').textContent = '';
+}
+
+/* password strength indicator */
+function checkStrength(val) {
+  const fill  = document.getElementById('strengthFill');
+  const label = document.getElementById('strengthLabel');
+  let score = 0;
+  if (val.length >= 6)  score++;
+  if (val.length >= 10) score++;
+  if (/[A-Z]/.test(val)) score++;
+  if (/[0-9]/.test(val)) score++;
+  if (/[^A-Za-z0-9]/.test(val)) score++;
+  const levels = [
+    { pct: '0%',   color: '',        text: '' },
+    { pct: '25%',  color: '#e63946', text: 'Weak' },
+    { pct: '50%',  color: '#d4a017', text: 'Fair' },
+    { pct: '75%',  color: '#457b9d', text: 'Good' },
+    { pct: '100%', color: '#2d6a4f', text: 'Strong' },
+  ];
+  const l = levels[Math.min(score, 4)];
+  fill.style.width      = l.pct;
+  fill.style.background = l.color;
+  label.textContent     = l.text;
+  label.style.color     = l.color;
+}
+
+/* ════════════════════════════════════════
+   LOGIN
+   ════════════════════════════════════════ */
+let currentUser = null;
+
+function doLogin() {
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value.trim();
+  show('errUser', !u);
+  show('errPass', !p);
+  if (!u || !p) return;
+
+  const user = UserDB.find(u);
+  if (!user || user.password !== p) {
+    showAlert('loginErr', 'Invalid username or password.', 'error'); return;
+  }
+
+  currentUser = user;
+  document.getElementById('loggedUser').textContent = user.username + ' · ' + user.role;
+
+  // Show "Manage Users" tab only for Administrators
+  document.getElementById('manageUsersBtn').style.display = user.role === 'Administrator' ? 'inline-block' : 'none';
+
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('appPage').style.display   = 'block';
+  refreshDashboard();
+  renderStudents();
+}
+
+function doLogout() {
+  currentUser = null;
+  document.getElementById('loginPage').style.display  = 'flex';
+  document.getElementById('appPage').style.display    = 'none';
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+}
+
+/* ════════════════════════════════════════
+   MANAGE USERS (admin view)
+   ════════════════════════════════════════ */
+function renderUsers() {
+  const users = UserDB.getAll();
+  const grid  = document.getElementById('usersGrid');
+  grid.innerHTML = users.map(u => `
+    <div class="user-card">
+      <div>
+        <div class="uname">${u.username}</div>
+        <div class="urole">${u.role} &nbsp;·&nbsp; ${u.fullName}</div>
+      </div>
+      ${u.username !== 'admin' ? `<button class="btn btn-danger" style="padding:4px 10px;font-size:10px" onclick="deleteUser('${u.username}')">Remove</button>` : '<span style="font-size:10px;color:var(--muted);font-family:var(--mono)">DEFAULT</span>'}
+    </div>`).join('');
+}
+
+function deleteUser(username) {
+  if (username === currentUser.username) { alert("You can't delete your own account."); return; }
+  UserDB.delete(username);
+  renderUsers();
+}
+
+/* ════════════════════════════════════════
+   NAVIGATION
+   ════════════════════════════════════════ */
+function switchTab(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'viewStudents') renderStudents();
+  if (id === 'dashboard')    refreshDashboard();
+  if (id === 'manageUsers')  renderUsers();
+}
+
+/* ════════════════════════════════════════
+   ADD STUDENT
+   ════════════════════════════════════════ */
+function addStudent() {
+  const id    = v('sId').trim();
+  const name  = v('sName').trim();
+  const email = v('sEmail').trim();
+  const phone = v('sPhone').trim();
+  const dept  = v('sDept');
+  let ok = true;
+  ok = validate('eId',   id,   'Student ID is required.')  && ok;
+  ok = validate('eName', name, 'Full name is required.')   && ok;
+  ok = validateEmail('eEmail', email)                      && ok;
+  ok = validatePhone('ePhone', phone)                      && ok;
+  ok = validate('eDept', dept, 'Department is required.')  && ok;
+  if (!ok) return;
+
+  const result = DB.insert({ id, name, email, phone, dept: v('sDept'), year: v('sYear') || '—', status: v('sStatus'), dob: v('sDob') || '—', address: v('sAddress').trim() || '—' });
+  if (!result.ok) { showAlert('addSuccess', result.msg, 'error'); return; }
+  showAlert('addSuccess', `Student "${name}" (${id}) added successfully.`, 'success');
+  clearAddForm();
+  refreshDashboard();
+}
+
+function clearAddForm() {
+  ['sId','sName','sEmail','sPhone','sDept','sYear','sStatus','sDob','sAddress'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el.tagName === 'SELECT') el.selectedIndex = 0; else el.value = '';
+  });
+  ['eId','eName','eEmail','ePhone','eDept'].forEach(id => show(id, false));
+}
+
+/* ════════════════════════════════════════
+   VIEW / RENDER
+   ════════════════════════════════════════ */
+function renderStudents() {
+  const rows = DB.selectAll();
+  document.getElementById('studentsBody').innerHTML = rows.length ? rows.map(r => studentRow(r)).join('') : noResults();
+}
+
+function refreshDashboard() {
+  const rows   = DB.selectAll();
+  const active = rows.filter(r => r.status === 'Active').length;
+  const depts  = new Set(rows.map(r => r.dept)).size;
+  document.getElementById('statTotal').textContent  = rows.length;
+  document.getElementById('statActive').textContent = active;
+  document.getElementById('statDepts').textContent  = depts;
+  const recent = rows.slice(-5).reverse();
+  document.getElementById('recentBody').innerHTML = recent.length
+    ? recent.map(r => `<tr>
+        <td><code style="font-size:11px">${r.id}</code></td>
+        <td>${r.name}</td><td>${r.dept}</td><td>${r.email}</td>
+        <td><span class="badge ${r.status==='Active'?'badge-active':'badge-inactive'}">${r.status}</span></td>
+      </tr>`).join('') : noResults();
+}
+
+function studentRow(r) {
+  return `<tr>
+    <td><code style="font-size:11px">${r.id}</code></td>
+    <td>${r.name}</td><td>${r.email}</td><td>${r.phone||'—'}</td>
+    <td>${r.dept}</td><td>${r.year||'—'}</td>
+    <td><span class="badge ${r.status==='Active'?'badge-active':'badge-inactive'}">${r.status}</span></td>
+    <td><div class="action-btns">
+      <button class="btn btn-secondary" style="padding:4px 10px;font-size:10px" onclick="openEdit('${r.id}')">Edit</button>
+      <button class="btn btn-danger"    style="padding:4px 10px;font-size:10px" onclick="openDelete('${r.id}')">Delete</button>
+    </div></td>
+  </tr>`;
+}
+
+/* ════════════════════════════════════════
+   SEARCH
+   ════════════════════════════════════════ */
+function doSearch() {
+  const q = document.getElementById('searchInput').value;
+  if (!q.trim()) { clearSearch(); return; }
+  const results = DB.search(q);
+  document.getElementById('searchBody').innerHTML = results.length
+    ? results.map(r => `<tr>
+        <td><code style="font-size:11px">${r.id}</code></td>
+        <td>${r.name}</td><td>${r.email}</td><td>${r.dept}</td>
+        <td>${r.year||'—'}</td>
+        <td><span class="badge ${r.status==='Active'?'badge-active':'badge-inactive'}">${r.status}</span></td>
+      </tr>`).join('')
+    : `<tr><td colspan="6" class="no-results">No students found matching "<strong>${q}</strong>"</td></tr>`;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('searchInput').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+});
+
+function clearSearch() {
+  document.getElementById('searchInput').value = '';
+  document.getElementById('searchBody').innerHTML = `<tr><td colspan="6" class="no-results">Enter a search term above.</td></tr>`;
+}
+
+/* ════════════════════════════════════════
+   EDIT MODAL
+   ════════════════════════════════════════ */
+let editingId = null;
+function openEdit(id) {
+  const r = DB.selectAll().find(x => x.id === id);
+  if (!r) return;
+  editingId = id;
+  document.getElementById('eModalId').value    = r.id;
+  document.getElementById('eModalName').value  = r.name;
+  document.getElementById('eModalEmail').value = r.email;
+  document.getElementById('eModalPhone').value = r.phone || '';
+  setSelect('eModalDept', r.dept); setSelect('eModalYear', r.year); setSelect('eModalStatus', r.status);
+  document.getElementById('editModal').classList.add('open');
+}
+function saveEdit() {
+  const name  = document.getElementById('eModalName').value.trim();
+  const email = document.getElementById('eModalEmail').value.trim();
+  let ok = true;
+  ok = validate('eeModalName',  name,  'Name required.')   && ok;
+  ok = validateEmail('eeModalEmail', email)                && ok;
+  if (!ok) return;
+  DB.update(editingId, { name, email, phone: document.getElementById('eModalPhone').value.trim(), dept: document.getElementById('eModalDept').value, year: document.getElementById('eModalYear').value, status: document.getElementById('eModalStatus').value });
+  closeModal(); renderStudents(); refreshDashboard();
+}
+function closeModal() { document.getElementById('editModal').classList.remove('open'); editingId = null; }
+
+/* ════════════════════════════════════════
+   DELETE MODAL
+   ════════════════════════════════════════ */
+let deletingId = null;
+function openDelete(id) { deletingId = id; document.getElementById('delModal').classList.add('open'); }
+function confirmDelete() { DB.delete(deletingId); closeDelModal(); renderStudents(); refreshDashboard(); }
+function closeDelModal() { document.getElementById('delModal').classList.remove('open'); deletingId = null; }
+
+/* ════════════════════════════════════════
+   VALIDATION HELPERS
+   ════════════════════════════════════════ */
+const v    = id => document.getElementById(id).value;
+const show = (id, flag) => document.getElementById(id).style.display = flag ? 'block' : 'none';
+
+function validate(errId, val, msg) {
+  document.getElementById(errId).textContent = msg;
+  show(errId, !val); return !!val;
+}
+function validateMinLen(errId, val, min, msg) {
+  const ok = val.length >= min;
+  document.getElementById(errId).textContent = msg;
+  show(errId, !ok); return ok;
+}
+function validateMatch(errId, a, b, msg) {
+  const ok = a === b && a.length > 0;
+  document.getElementById(errId).textContent = msg;
+  show(errId, !ok); return ok;
+}
+function validateEmail(errId, val) {
+  const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+  document.getElementById(errId).textContent = 'Valid email is required.';
+  show(errId, !ok); return ok;
+}
+function validatePhone(errId, val) {
+  if (!val) { show(errId, false); return true; }
+  const ok = /^\d{10}$/.test(val);
+  document.getElementById(errId).textContent = 'Enter a valid 10-digit phone number.';
+  show(errId, !ok); return ok;
+}
+function showAlert(id, msg, type) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.className = `alert ${type}`;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 4000);
+}
+function noResults() {
+  return `<tr><td colspan="8" class="no-results">No student records found.</td></tr>`;
+}
+function setSelect(id, val) {
+  const el = document.getElementById(id);
+  for (let o of el.options) if (o.value === val) { o.selected = true; break; }
+}
+</script>
+</body>
+</html>
